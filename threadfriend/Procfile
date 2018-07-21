@@ -1,0 +1,1 @@
+web: java $JVM_OPTS -cp target/threadfriend.jar clojure.main -m threadfriend.server

@@ -1,108 +1,111 @@
 (defproject threadfriend "0.1.0-SNAPSHOT"
-  :description "FIXME: write this!"
+  :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  ;; This Figwheel project was generated with Java 9
-  ;; and ClojureScript currently needs this flag added to the compiler
-  ;; under Java 9
-  :jvm-opts ["--add-modules" "java.xml.bind"]
-  
-  :min-lein-version "2.7.1"
-
   :dependencies [[org.clojure/clojure "1.9.0"]
-                 [org.clojure/clojurescript "1.10.238"]
-                 [org.clojure/core.async  "0.4.474"]]
+                 [ring-server "0.5.0"]
+                 [reagent "0.8.1"]
+                 [reagent-utils "0.3.1"]
+                 [ring "1.6.3"]
+                 [ring/ring-defaults "0.3.1"]
+                 [compojure "1.6.1"]
+                 [hiccup "1.0.5"]
+                 [yogthos/config "1.1.1"]
+                 [org.clojure/clojurescript "1.10.339"
+                  :scope "provided"]
+                 [secretary "1.2.3"]
+                 [venantius/accountant "0.2.4"
+                  :exclusions [org.clojure/tools.reader]]]
 
-  :plugins [[lein-figwheel "0.5.16"]
-            [lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]]
+  :plugins [[lein-environ "1.1.0"]
+            [lein-cljsbuild "1.1.7"]
+            [lein-asset-minifier "0.2.7"
+             :exclusions [org.clojure/clojure]]]
 
-  :source-paths ["src"]
+  :ring {:handler threadfriend.handler/app
+         :uberwar-name "threadfriend.war"}
 
-  :cljsbuild {:builds
-              [{:id "dev"
-                :source-paths ["src"]
+  :min-lein-version "2.5.0"
+  :uberjar-name "threadfriend.jar"
+  :main threadfriend.server
+  :jvm-opts ["--add-modules" "java.xml.bind"]
+  :clean-targets ^{:protect false}
+  [:target-path
+   [:cljsbuild :builds :app :compiler :output-dir]
+   [:cljsbuild :builds :app :compiler :output-to]]
 
-                ;; The presence of a :figwheel configuration here
-                ;; will cause figwheel to inject the figwheel client
-                ;; into your build
-                :figwheel {:on-jsload "threadfriend.core/on-js-reload"
-                           ;; :open-urls will pop open your application
-                           ;; in the default browser once Figwheel has
-                           ;; started and compiled your application.
-                           ;; Comment this out once it no longer serves you.
-                           :open-urls ["http://localhost:3449/index.html"]}
+  :source-paths ["src/clj" "src/cljc"]
+  :resource-paths ["resources" "target/cljsbuild"]
 
-                :compiler {:main threadfriend.core
-                           :asset-path "js/compiled/out"
-                           :output-to "resources/public/js/compiled/threadfriend.js"
-                           :output-dir "resources/public/js/compiled/out"
-                           :source-map-timestamp true
-                           ;; To console.log CLJS data-structures make sure you enable devtools in Chrome
-                           ;; https://github.com/binaryage/cljs-devtools
-                           :preloads [devtools.preload]}}
-               ;; This next build is a compressed minified build for
-               ;; production. You can build this with:
-               ;; lein cljsbuild once min
-               {:id "min"
-                :source-paths ["src"]
-                :compiler {:output-to "resources/public/js/compiled/threadfriend.js"
-                           :main threadfriend.core
-                           :optimizations :advanced
-                           :pretty-print false}}]}
+  :minify-assets
+  {:assets
+   {"resources/public/css/site.min.css" "resources/public/css/site.css"}}
 
-  :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
-             ;; :server-port 3449 ;; default
-             ;; :server-ip "127.0.0.1"
-
-             :css-dirs ["resources/public/css"] ;; watch and update CSS
-
-             ;; Start an nREPL server into the running figwheel process
-             ;; :nrepl-port 7888
-
-             ;; Server Ring Handler (optional)
-             ;; if you want to embed a ring handler into the figwheel http-kit
-             ;; server, this is for simple ring servers, if this
-
-             ;; doesn't work for you just run your own server :) (see lein-ring)
-
-             ;; :ring-handler hello_world.server/handler
-
-             ;; To be able to open files in your editor from the heads up display
-             ;; you will need to put a script on your path.
-             ;; that script will have to take a file path and a line number
-             ;; ie. in  ~/bin/myfile-opener
-             ;; #! /bin/sh
-             ;; emacsclient -n +$2 $1
-             ;;
-             ;; :open-file-command "myfile-opener"
-
-             ;; if you are using emacsclient you can just use
-             ;; :open-file-command "emacsclient"
-
-             ;; if you want to disable the REPL
-             ;; :repl false
-
-             ;; to configure a different figwheel logfile path
-             ;; :server-logfile "tmp/logs/figwheel-logfile.log"
-
-             ;; to pipe all the output to the repl
-             ;; :server-logfile false
-             }
+  :cljsbuild
+  {:builds {:min
+            {:source-paths ["src/cljs" "src/cljc" "env/prod/cljs"]
+             :compiler
+             {:output-to        "target/cljsbuild/public/js/app.js"
+              :output-dir       "target/cljsbuild/public/js"
+              :source-map       "target/cljsbuild/public/js/app.js.map"
+              :optimizations :advanced
+              :pretty-print  false}}
+            :app
+            {:source-paths ["src/cljs" "src/cljc" "env/dev/cljs"]
+             :figwheel {:on-jsload "threadfriend.core/mount-root"}
+             :compiler
+             {:main "threadfriend.dev"
+              :asset-path "/js/out"
+              :output-to "target/cljsbuild/public/js/app.js"
+              :output-dir "target/cljsbuild/public/js/out"
+              :source-map true
+              :optimizations :none
+              :pretty-print  true}}
 
 
-  ;; Setting up nREPL for Figwheel and ClojureScript dev
-  ;; Please see:
-  ;; https://github.com/bhauman/lein-figwheel/wiki/Using-the-Figwheel-REPL-within-NRepl
-  :profiles {:dev {:dependencies [[binaryage/devtools "0.9.9"]
+
+            }
+   }
+
+  :figwheel
+  {:http-server-root "public"
+   :server-port 3449
+   :nrepl-port 7002
+   :nrepl-middleware ["cemerick.piggieback/wrap-cljs-repl"
+                      ]
+   :css-dirs ["resources/public/css"]
+   :ring-handler threadfriend.handler/app}
+
+
+
+  :profiles {:dev {:repl-options {:init-ns threadfriend.repl
+                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+
+                   :dependencies [[binaryage/devtools "0.9.10"]
+                                  [ring/ring-mock "0.3.2"]
+                                  [ring/ring-devel "1.6.3"]
+                                  [prone "1.5.2"]
                                   [figwheel-sidecar "0.5.16"]
-                                  [cider/piggieback "0.3.1"]]
-                   ;; need to add dev source path here to get user.clj loaded
-                   :source-paths ["src" "dev"]
-                   ;; for CIDER
-                   ;; :plugins [[cider/cider-nrepl "0.12.0"]]
-                   :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
-                   ;; need to add the compliled assets to the :clean-targets
-                   :clean-targets ^{:protect false} ["resources/public/js/compiled"
-                                                     :target-path]}})
+                                  [org.clojure/tools.nrepl "0.2.13"]
+                                  [com.cemerick/piggieback "0.2.2"]
+                                  [pjstadig/humane-test-output "0.8.3"]
+                                  
+ ]
+
+                   :source-paths ["env/dev/clj"]
+                   :plugins [[lein-figwheel "0.5.16"]
+]
+
+                   :injections [(require 'pjstadig.humane-test-output)
+                                (pjstadig.humane-test-output/activate!)]
+
+                   :env {:dev true}}
+
+             :uberjar {:hooks [minify-assets.plugin/hooks]
+                       :source-paths ["env/prod/clj"]
+                       :prep-tasks ["compile" ["cljsbuild" "once" "min"]]
+                       :env {:production true}
+                       :aot :all
+                       :omit-source true}})
