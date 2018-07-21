@@ -6,13 +6,26 @@
 ;; -------------------------
 ;; Views
 
-(defn home-page []
-  [:div [:h2 "Welcome to threadfriend"]
-   [:div [:a {:href "/about"} "go to about page"]]])
+(def user-text (reagent/atom ""))
 
-(defn about-page []
-  [:div [:h2 "About threadfriend"]
-   [:div [:a {:href "/"} "go to the home page"]]])
+(defn home-page []
+  [:div
+   [:h1 "Welcome to ThreadFriend"]
+   [:input {:type "text"
+            :style {:width "100%" :height "100px"}
+            :placeholder "Insert Slack Conversation Here"
+            :value @user-text
+            :on-change #(reset! user-text (-> % .-target .-value))}]
+   [:input {
+            :type "button"
+            :value "Click Me"
+            :on-click #(.log js/console @user-text)
+            }
+    ]
+   ]
+  )
+
+
 
 ;; -------------------------
 ;; Routes
@@ -24,9 +37,6 @@
 
 (secretary/defroute "/" []
   (reset! page #'home-page))
-
-(secretary/defroute "/about" []
-  (reset! page #'about-page))
 
 ;; -------------------------
 ;; Initialize app
